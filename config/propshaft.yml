@@ -1,0 +1,4 @@
+paths:
+  - app/assets
+  - app/assets/builds
+  - vendor/assets

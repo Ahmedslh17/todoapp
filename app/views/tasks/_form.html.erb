@@ -1,0 +1,8 @@
+<div class="sticky -top-2 z-10 mb-3 rounded-2xl bg-white/90 p-2 backdrop-blur ring-1 ring-slate-900/5">
+  <%= form_with(model: task, class: "flex gap-2") do |f| %>
+    <%= f.text_field :title, autofocus: true, placeholder: "Ajouter une tâche…",
+      class: "flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+    <%= f.submit (task.persisted? ? "Mettre à jour" : "Ajouter"),
+      class: "rounded-xl bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 active:scale-95 fade" %>
+  <% end %>
+</div>

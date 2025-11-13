@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ma To-Do</title>
+
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-900">
+
+  <!-- Barre supérieure -->
+  <header class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md py-4 px-6">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-3xl">📝</span>
+        <h1 class="text-2xl font-bold">Ma To-Do</h1>
+      </div>
+
+      <a href="/" class="bg-white/20 px-3 py-1.5 rounded-lg text-sm hover:bg-white/30">
+        ↻ 
+      </a>
+    </div>
+  </header>
+
+  <!-- Contenu -->
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-lg p-6 ring-1 ring-slate-900/5">
+      <%= yield %>
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-slate-500">
+    © <%= Time.now.year %> Ma To-Do — Créé avec ❤️ et Rails
+  </footer>
+
+</body>
+</html>
