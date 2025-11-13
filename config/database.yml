@@ -3,23 +3,23 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 development:
   <<: *default
   database: todoapp_development
   host: localhost
   username: postgres
-  password: 6dcbbcc4276f49c985021ba64ebb9c69
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 test:
   <<: *default
   database: todoapp_test
   host: localhost
   username: postgres
-  password: 6dcbbcc4276f49c985021ba64ebb9c69
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
-# En production sur Render, on utilise uniquement DATABASE_URL
 production:
   <<: *default
+  # Render utilisera DATABASE_URL (fourni par le service Postgres)
   url: <%= ENV["DATABASE_URL"] %>
