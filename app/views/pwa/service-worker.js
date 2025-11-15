@@ -1,11 +1,12 @@
-const CACHE_NAME = "todo-v1";
+const CACHE_NAME = "todo-v2";
 const ASSETS = [
   "/",
   "/icon.png",
   "/icon-512.png",
-  "/manifest"
+  "/manifest.json"
 ];
 
+// INSTALL
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -13,29 +14,51 @@ self.addEventListener("install", (e) => {
   self.skipWaiting();
 });
 
+// ACTIVATE
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k))))
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      )
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (e) => {
-  const req = e.request;
-  // Network-first pour HTML (fraîcheur), cache-first pour le reste (rapidité)
+// FETCH
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // On ne met PAS en cache : PATCH, POST, PUT, DELETE
+  if (req.method !== "GET") {
+    return event.respondWith(fetch(req));
+  }
+
+  // On ne met pas en cache les pages turbo rails
+  if (req.headers.get("accept")?.includes("text/vnd.turbo-stream.html")) {
+    return event.respondWith(fetch(req));
+  }
+
+  // HTML → Network First
   if (req.headers.get("accept")?.includes("text/html")) {
-    e.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req))
-    );
-  } else {
-    e.respondWith(
-      caches.match(req).then((cached) => cached || fetch(req))
+    return event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req))
     );
   }
+
+  // Static Files → Cache First
+  event.respondWith(
+    caches.match(req).then((cacheRes) => {
+      return cacheRes || fetch(req);
+    })
+  );
 });

@@ -8,8 +8,29 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- Icône iOS -->
+  <link rel="apple-touch-icon" href="/icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- CSS / JS Rails -->
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
+
+  <!-- Enregistrement du service worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/service-worker.js")
+          .then(() => console.log("Service worker enregistré"))
+          .catch((err) => console.error("SW error:", err));
+      });
+    }
+  </script>
 </head>
 
 <body class="min-h-screen flex flex-col bg-slate-100 text-slate-900">
@@ -23,7 +44,7 @@
       </div>
 
       <a href="/" class="bg-white/20 px-3 py-1.5 rounded-lg text-sm hover:bg-white/30">
-        ↻ 
+        ↻
       </a>
     </div>
   </header>
@@ -38,6 +59,71 @@
   <footer class="py-4 text-center text-xs text-slate-500">
     © <%= Time.now.year %> Ma To-Do — Créé avec ❤️ et Rails
   </footer>
+
+  <!-- POPUP INSTALLATION ANDROID -->
+  <div id="install-box"
+       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
+    <p class="font-semibold mb-2">Installe l’application 📱</p>
+    <p class="text-sm text-slate-600 mb-3">Ajoute la To-Do sur ton écran d’accueil.</p>
+    <button id="install-btn"
+            class="bg-indigo-600 text-white px-4 py-2 rounded-xl w-full">
+      Installer
+    </button>
+  </div>
+
+  <!-- POPUP INSTALLATION iPHONE -->
+  <div id="ios-tip"
+       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
+    <p class="font-semibold mb-2">Installe l’application sur ton iPhone 📱</p>
+    <p class="text-sm text-slate-600 mb-3">
+      Appuie sur <strong>Partager</strong> → <strong>Ajouter à l'écran d'accueil</strong>.
+    </p>
+  </div>
+
+  <!-- JS pour popup d’installation -->
+  <script>
+    let deferredPrompt;
+
+    // Détection Android / Chrome
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      const box = document.getElementById("install-box");
+      if (box) box.classList.remove("hidden");
+    });
+
+    // Clique sur Installer (Android / Chrome)
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("install-btn");
+      if (!btn) return;
+
+      btn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        console.log("Résultat installation :", choice);
+        deferredPrompt = null;
+
+        const box = document.getElementById("install-box");
+        if (box) box.classList.add("hidden");
+      });
+    });
+
+    // Popup iPhone (Safari)
+    function checkiOS() {
+      const ua = window.navigator.userAgent;
+      const isIOS = /iphone|ipad|ipod/i.test(ua);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+
+      if (isIOS && isSafari && !window.matchMedia("(display-mode: standalone)").matches) {
+        const tip = document.getElementById("ios-tip");
+        if (tip) tip.classList.remove("hidden");
+      }
+    }
+    checkiOS();
+  </script>
 
 </body>
 </html>
