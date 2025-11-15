@@ -21,6 +21,10 @@ class TasksController < ApplicationController
     end
   end
 
+  def show
+    # @task déjà chargé par set_task
+  end
+
   def update
     if @task.update(task_params)
       redirect_to tasks_path, notice: "Tâche mise à jour."
@@ -34,10 +38,8 @@ class TasksController < ApplicationController
     redirect_to tasks_path, notice: "Tâche supprimée."
   end
 
-  # PATCH /tasks/reorder
   def reorder
     ids = params[:ordered_ids] || []
-    # On applique la nouvelle position dans l'ordre reçu
     Task.transaction do
       ids.each_with_index do |id, index|
         Task.where(id: id).update_all(position: index + 1)
@@ -47,12 +49,12 @@ class TasksController < ApplicationController
   end
 
   private
+
     def set_task
       @task = Task.find(params[:id])
     end
 
     def task_params
-      params.expect(task: [ :title, :done ])
+      params.require(:task).permit(:title, :done, :position, :reminder_at)
     end
-    
 end

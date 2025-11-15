@@ -1,10 +1,28 @@
-<% content_for :title, "Editing task" %>
+<%# app/views/tasks/edit.html.erb %>
+<section class="mx-auto mt-8 max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="text-xl font-semibold tracking-tight mb-2">
+    Modifier la tâche
+  </h1>
+  <p class="text-sm text-slate-500 mb-4">
+    Modifie le titre ou le statut de ta tâche. Le rappel programmé est affiché ci-dessous s’il existe.
+  </p>
 
-<div class="md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">Editing task</h1>
+  <div class="space-y-4">
+    <%= render "form", task: @task %>
 
-  <%= render "form", task: @task %>
+    <% if @task.reminder_at.present? %>
+      <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
+        <span class="font-medium">Rappel programmé :</span>
+        <%= l @task.reminder_at.in_time_zone("Europe/Paris"), format: "%d/%m/%Y à %H:%M" %>
+      </div>
+    <% end %>
+  </div>
 
-  <%= link_to "Show this task", @task, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= link_to "Back to tasks", tasks_path, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-</div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <%= link_to "← Retour à la liste", tasks_path,
+          class: "inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50" %>
+
+    <%= link_to "Voir la tâche", @task,
+          class: "inline-flex items-center rounded-xl border border-indigo-600 px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50" %>
+  </div>
+</section>
