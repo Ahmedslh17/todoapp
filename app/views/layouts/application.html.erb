@@ -12,7 +12,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0f172a">
 
-  <!-- Icône iOS -->
+  <!-- iOS -->
   <link rel="apple-touch-icon" href="/icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,106 +24,93 @@
   <!-- Enregistrement du service worker -->
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/service-worker.js")
-          .then(() => console.log("Service worker enregistré"))
-          .catch((err) => console.error("SW error:", err));
-      });
+      navigator.serviceWorker.register("/service-worker.js")
+        .then(() => console.log("Service Worker OK"))
+        .catch((e) => console.error("SW ERROR", e));
     }
   </script>
 </head>
 
 <body class="min-h-screen flex flex-col bg-slate-100 text-slate-900">
 
-  <!-- Barre supérieure -->
-  <header class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md py-4 px-6">
-    <div class="max-w-5xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-3xl">📝</span>
-        <h1 class="text-2xl font-bold">Ma To-Do</h1>
-      </div>
-
-      <a href="/" class="bg-white/20 px-3 py-1.5 rounded-lg text-sm hover:bg-white/30">
-        ↻
-      </a>
+<header class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md py-4 px-6">
+  <div class="max-w-5xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-3xl">📝</span>
+      <h1 class="text-2xl font-bold">Ma To-Do</h1>
     </div>
-  </header>
 
-  <!-- Contenu -->
-  <main class="flex-1 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white rounded-3xl shadow-lg p-6 ring-1 ring-slate-900/5">
-      <%= yield %>
-    </div>
-  </main>
-
-  <footer class="py-4 text-center text-xs text-slate-500">
-    © <%= Time.now.year %> Ma To-Do — Créé avec ❤️ et Rails
-  </footer>
-
-  <!-- POPUP INSTALLATION ANDROID -->
-  <div id="install-box"
-       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
-    <p class="font-semibold mb-2">Installe l’application 📱</p>
-    <p class="text-sm text-slate-600 mb-3">Ajoute la To-Do sur ton écran d’accueil.</p>
-    <button id="install-btn"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-xl w-full">
-      Installer
-    </button>
+    <a href="/" class="bg-white/20 px-3 py-1.5 rounded-lg text-sm hover:bg-white/30">
+      ↻
+    </a>
   </div>
+</header>
 
-  <!-- POPUP INSTALLATION iPHONE -->
-  <div id="ios-tip"
-       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
-    <p class="font-semibold mb-2">Installe l’application sur ton iPhone 📱</p>
-    <p class="text-sm text-slate-600 mb-3">
-      Appuie sur <strong>Partager</strong> → <strong>Ajouter à l'écran d'accueil</strong>.
-    </p>
+<main class="flex-1 flex items-center justify-center p-6">
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-lg p-6 ring-1 ring-slate-900/5">
+    <%= yield %>
   </div>
+</main>
 
-  <!-- JS pour popup d’installation -->
-  <script>
-    let deferredPrompt;
+<footer class="py-4 text-center text-xs text-slate-500">
+  © <%= Time.now.year %> Ma To-Do — Créé avec ❤️ et Rails
+</footer>
 
-    // Détection Android / Chrome
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
+<!-- POPUP INSTALL ANDROID -->
+<div id="install-box" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2
+             bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
+  <p class="font-semibold mb-2">Installe l’application 📱</p>
+  <p class="text-sm text-slate-600 mb-3">Ajoute la To-Do sur ton écran d’accueil.</p>
+  <button id="install-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-xl w-full">
+    Installer
+  </button>
+</div>
 
-      const box = document.getElementById("install-box");
-      if (box) box.classList.remove("hidden");
+<!-- POPUP iPHONE -->
+<div id="ios-tip" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2
+             bg-white shadow-xl p-4 rounded-2xl border w-80 text-center z-50">
+  <p class="font-semibold mb-2">Installe l’application sur iPhone 📱</p>
+  <p class="text-sm text-slate-600 mb-3">
+    Appuie sur <strong>Partager</strong> → <strong>Ajouter à l’écran d’accueil</strong>.
+  </p>
+</div>
+
+<script>
+  let deferredPrompt;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById("install-box").classList.remove("hidden");
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("install-btn");
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+
+      document.getElementById("install-box").classList.add("hidden");
     });
+  });
 
-    // Clique sur Installer (Android / Chrome)
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("install-btn");
-      if (!btn) return;
+  function checkiOS() {
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
 
-      btn.addEventListener("click", async () => {
-        if (!deferredPrompt) return;
-
-        deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        console.log("Résultat installation :", choice);
-        deferredPrompt = null;
-
-        const box = document.getElementById("install-box");
-        if (box) box.classList.add("hidden");
-      });
-    });
-
-    // Popup iPhone (Safari)
-    function checkiOS() {
-      const ua = window.navigator.userAgent;
-      const isIOS = /iphone|ipad|ipod/i.test(ua);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-
-      if (isIOS && isSafari && !window.matchMedia("(display-mode: standalone)").matches) {
-        const tip = document.getElementById("ios-tip");
-        if (tip) tip.classList.remove("hidden");
-      }
+    if (isIOS && isSafari && !window.matchMedia("(display-mode: standalone)").matches) {
+      document.getElementById("ios-tip").classList.remove("hidden");
     }
-    checkiOS();
-  </script>
+  }
+
+  checkiOS();
+</script>
 
 </body>
 </html>

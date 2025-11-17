@@ -1,4 +1,9 @@
 const CACHE_NAME = "todo-v2";
+
+// 🔐 Clé publique VAPID envoyée par Rails
+const VAPID_PUBLIC_KEY = "<%= Rails.configuration.x.vapid_public_key %>";
+
+// Fichiers à mettre en cache
 const ASSETS = [
   "/",
   "/icon.png",
@@ -7,22 +12,18 @@ const ASSETS = [
 ];
 
 // INSTALL
-self.addEventListener("install", (e) => {
-  e.waitUntil(
+self.addEventListener("install", (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });
 
 // ACTIVATE
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      )
+      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
     )
   );
   self.clients.claim();
@@ -32,33 +33,36 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 
-  // On ne met PAS en cache : PATCH, POST, PUT, DELETE
-  if (req.method !== "GET") {
-    return event.respondWith(fetch(req));
-  }
+  if (req.method !== "GET") return event.respondWith(fetch(req));
 
-  // On ne met pas en cache les pages turbo rails
-  if (req.headers.get("accept")?.includes("text/vnd.turbo-stream.html")) {
+  if (req.headers.get("accept")?.includes("text/vnd.turbo-stream.html"))
     return event.respondWith(fetch(req));
-  }
 
-  // HTML → Network First
   if (req.headers.get("accept")?.includes("text/html")) {
     return event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
           return res;
         })
         .catch(() => caches.match(req))
     );
   }
 
-  // Static Files → Cache First
   event.respondWith(
-    caches.match(req).then((cacheRes) => {
-      return cacheRes || fetch(req);
+    caches.match(req).then((cached) => cached || fetch(req))
+  );
+});
+
+// 🔔 Push Notification
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : {};
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Rappel", {
+      body: data.body || "Tu as une tâche à faire !",
+      icon: "/icon.png",
+      badge: "/icon.png"
     })
   );
 });
