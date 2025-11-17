@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_15_124733) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_17_231600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.string "auth_key", null: false
+    t.string "client_token", null: false
+    t.datetime "created_at", null: false
+    t.string "endpoint", null: false
+    t.string "p256dh_key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_token"], name: "index_push_subscriptions_on_client_token", unique: true
+  end
 
   create_table "tasks", force: :cascade do |t|
     t.string "client_token"

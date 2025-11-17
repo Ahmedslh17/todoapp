@@ -1,12 +1,22 @@
+# app/services/webpush_service.rb
 require "webpush"
 
-VAPID_PUBLIC_KEY = ENV["VAPID_PUBLIC_KEY"]
-VAPID_PRIVATE_KEY = ENV["VAPID_PRIVATE_KEY"]
+class WebpushService
+  def self.send_notification(subscription_json, title:, body:)
+    subscription = JSON.parse(subscription_json)
 
-WEBPUSH_PARAMS = {
-  vapid: {
-    subject: "studiokreatix@gmail.com",
-    public_key: VAPID_PUBLIC_KEY,
-    private_key: VAPID_PRIVATE_KEY
-  }
-}
+    Webpush.payload_send(
+      message: { title: title, body: body }.to_json,
+      endpoint: subscription["endpoint"],
+      p256dh: subscription["keys"]["p256dh"],
+      auth: subscription["keys"]["auth"],
+      vapid: {
+        subject: Rails.configuration.x.vapid_contact,
+        public_key: Rails.configuration.x.vapid_public_key,
+        private_key: Rails.configuration.x.vapid_private_key
+      }
+    )
+  rescue => e
+    Rails.logger.error("WebPush ERROR: #{e.message}")
+  end
+end
