@@ -5,11 +5,11 @@ class PushNotificationJob < ApplicationJob
     task = Task.find_by(id: task_id)
     return unless task
 
-    sub_json = task.client_subscription_json
-    return unless sub_json
+    subscription = task.push_subscription
+    return unless subscription
 
     WebpushService.send_notification(
-      sub_json,
+      subscription.to_webpush_format,
       title: "🔔 Rappel : #{task.title}",
       body: "Tu as une tâche prévue maintenant !"
     )

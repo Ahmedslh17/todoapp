@@ -1,6 +1,13 @@
 class PushSubscription < ApplicationRecord
-  belongs_to :task, optional: true, primary_key: :client_token, foreign_key: :client_token
+  belongs_to :task, optional: true
 
-  validates :client_token, presence: true
-  validates :endpoint, :p256dh_key, :auth_key, presence: true
+  def to_webpush_format
+    {
+      endpoint: endpoint,
+      keys: {
+        p256dh: p256dh_key,
+        auth: auth_key
+      }
+    }
+  end
 end

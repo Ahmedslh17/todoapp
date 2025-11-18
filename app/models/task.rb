@@ -1,18 +1,39 @@
 class Task < ApplicationRecord
+  # ===== Validations =====
   validates :title, presence: true, length: { maximum: 120 }
-
-  # 🔐 Chaque tâche est liée à un navigateur anonyme
   validates :client_token, presence: true
 
-  has_one :push_subscription, primary_key: :client_token, foreign_key: :client_token
+  # ===== Associations =====
+  # On relie la subscription via client_token (pas task_id)
+  has_one :push_subscription,
+          foreign_key: :client_token,
+          primary_key: :client_token,
+          dependent: :destroy
 
-  # Scopes
+  # ===== Scopes =====
   scope :for_client, ->(token) { where(client_token: token) }
   scope :done,       -> { where(done: true) }
   scope :todo,       -> { where(done: false) }
 
+  # ===== Callbacks =====
   before_create :set_default_position
   after_update  :send_reminder_if_needed
+
+  # ===== Méthodes publiques =====
+
+  # Utilisée par PushNotificationJob
+  # → retourne la structure attendue par webpush
+  def client_subscription_json
+    return nil unless push_subscription
+
+    {
+      "endpoint" => push_subscription.endpoint,
+      "keys" => {
+        "p256dh" => push_subscription.p256dh_key,
+        "auth"   => push_subscription.auth_key
+      }
+    }
+  end
 
   private
 
@@ -20,7 +41,6 @@ class Task < ApplicationRecord
     self.position ||= (Task.maximum(:position) || 0) + 1
   end
 
-  # 🔔 Quand on change reminder_at → planifier un job
   def send_reminder_if_needed
     return unless reminder_at.present?
     return unless saved_change_to_reminder_at?
